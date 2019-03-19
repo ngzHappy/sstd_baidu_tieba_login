@@ -104,7 +104,6 @@ namespace _theMainWindowFile{
     inline void LoginFunction::doRun(){
 #define error_goto(...) varThisData->isErrorYield = true ; goto __VA_ARGS__
 
-        auto varThis = this->shared_from_this()/*当前堆栈获得数据所有权*/;
         auto varLoginAns = thisData.ans/*当前堆栈获得数据所有权*/;
         auto varThisData = &thisData;
         auto varNetworkAccessManager = varLoginAns->networkAccessManager.get();
@@ -117,7 +116,7 @@ just_start_label:errorYield();
             QNetworkRequest varRequest{ QStringLiteral(R"(https://tieba.baidu.com/index.html)") };
             auto varReply = varNetworkAccessManager->get( varRequest );
             varReply->connect( varReply , &QNetworkReply::finished,
-                               [varReply,this,varThis,varThisData](){
+                               [varReply,this,varThis=copyThisToAnotherStack(),varThisData](){
                 varReply->deleteLater();
                 if( varReply->error() != QNetworkReply::NoError ){
                     varThisData->ans->hasError = true;
