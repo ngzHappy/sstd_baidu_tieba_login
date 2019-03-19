@@ -11,10 +11,12 @@ include($$PWD/../sstd_library/sstd_library.pri)
 include($$PWD/../sstd_qt_qml_quick_library/sstd_qt_qml_quick_library.pri)
 
 SOURCES += $$PWD/main.cpp \
-    $$PWD/MainWindow.cpp
+    $$PWD/MainWindow.cpp \
+    LoginFunctionBasic.cpp
 
 HEADERS += \
-    $$PWD/MainWindow.hpp
+    $$PWD/MainWindow.hpp \
+    LoginFunctionBasic.hpp
 
 DESTDIR = $${SSTD_LIBRARY_OUTPUT_PATH}
 
