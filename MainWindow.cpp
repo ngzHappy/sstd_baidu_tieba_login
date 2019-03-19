@@ -116,14 +116,14 @@ just_start_label:errorYield();
             QNetworkRequest varRequest{ QStringLiteral(R"(https://tieba.baidu.com/index.html)") };
             auto varReply = varNetworkAccessManager->get( varRequest );
             varReply->connect( varReply , &QNetworkReply::finished,
-                               [varReply,this,varThis=copyThisToAnotherStack(),varThisData](){
+                             bindFunctionWithThis(  [varReply,this ,varThisData](){
                 varReply->deleteLater();
                 if( varReply->error() != QNetworkReply::NoError ){
                     varThisData->ans->hasError = true;
                     varThisData->ans->ErrorString = varReply->errorString();
                 }
                 this->resume();
-            } );
+            } ));
             this->yield();
         }
         if( varLoginAns->hasError ){
