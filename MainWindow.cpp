@@ -26,7 +26,6 @@ namespace _theMainWindowFile{
         inline LoginFunction(T && userName,U && passWord);
     protected:
         inline void doRun() override ;
-        inline void errorYield();
     private:
         sstd_class(LoginFunction);
     };
@@ -102,13 +101,19 @@ namespace _theMainWindowFile{
     }
 
     inline void LoginFunction::doRun(){
-#define error_goto(...) varThisData->isErrorYield = true ; goto __VA_ARGS__
+
+#define error_goto(...)   varThisData->isErrorYield = true ; goto __VA_ARGS__
+#define error_yield(...)  __VA_ARGS__ : if(varThisData->isErrorYield){ \
+    varThisData->isErrorYield=false; \
+    this->finished( thisData.ans ); \
+    sstd_function_outer_yield() ; } \
+    static_assert (true )
 
         auto varLoginAns = thisData.ans/*当前堆栈获得数据所有权*/;
         auto varThisData = &thisData;
         auto varNetworkAccessManager = varLoginAns->networkAccessManager.get();
 
-just_start_label:errorYield();
+        error_yield(just_start_label);
 
         /*访问百度贴吧,检查网络，并获得一些cookies*/
         {
@@ -116,15 +121,14 @@ just_start_label:errorYield();
             QNetworkRequest varRequest{ QStringLiteral(R"(https://tieba.baidu.com/index.html)") };
             auto varReply = varNetworkAccessManager->get( varRequest );
             varReply->connect( varReply , &QNetworkReply::finished,
-                             bindFunctionWithThis(  [varReply,this ,varThisData](){
+                             bindFunctionWithThis(  [varReply, varThisData](){
                 varReply->deleteLater();
                 if( varReply->error() != QNetworkReply::NoError ){
                     varThisData->ans->hasError = true;
                     varThisData->ans->ErrorString = varReply->errorString();
                 }
-                this->resume();
             } ));
-            this->yield();
+            sstd_function_inner_yield();
         }
         if( varLoginAns->hasError ){
             error_goto(just_start_label);
@@ -135,16 +139,11 @@ just_start_label:errorYield();
         /*登录完成*/
         this->finished( thisData.ans );
 
+#undef error_yield
 #undef error_goto
     }
 
-    inline void LoginFunction::errorYield(){
-        if(thisData.isErrorYield){
-            thisData.isErrorYield = false;
-            this->finished( thisData.ans );
-            this->yield();
-        }
-    }
+
 
 }/*_theMainWindowFile*/
 
