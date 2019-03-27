@@ -42,7 +42,6 @@ namespace _theMainWindowFile {
         return QStringLiteral("&&quit:");
     }
 
-
 }/*_theMainWindowFile*/
 
 class MainWindowPrivate : public QObject {
@@ -208,15 +207,16 @@ namespace _theMainWindowFile {
 
     inline void LoginFunction::doRun() {
 
-#define error_goto(...) if( varLoginAns->hasError ) { \
-    goto __VA_ARGS__; } static_assert (true)
-
         auto varLoginAns = thisData.ans/*当前堆栈获得数据所有权*/;
         auto varThisData = &thisData;
         auto varNetworkAccessManager = varLoginAns->networkAccessManager.get();
+#if defined(error_goto)
+#error should not define error_goto
+#endif
+#define error_goto(...) if( varLoginAns->hasError ) { \
+    goto __VA_ARGS__; } static_assert (true)
 
     just_start_label:errorYield();
-
     {/*访问百度贴吧:检查网络，并获得一些cookies*/
         varThisData->ans->hasError = false;
         QNetworkRequest varRequest{ QStringLiteral(R"(https://tieba.baidu.com/index.html)") };
