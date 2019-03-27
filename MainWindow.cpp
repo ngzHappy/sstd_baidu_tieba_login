@@ -19,13 +19,15 @@ namespace _theMainWindowFile{
         public:
             std::shared_ptr< LoginFunctionAns > ans;
             QString passWord;
-            bool isErrorYield{false};
         }thisData;
     public:
         template<typename T,typename U>
         inline LoginFunction(T && userName,U && passWord);
     protected:
         inline void doRun() override ;
+        inline void doQuit() noexcept override ;
+        inline void doException() noexcept override ;
+        inline void errorYield();
     private:
         sstd_class(LoginFunction);
     };
@@ -100,50 +102,70 @@ namespace _theMainWindowFile{
         thisData.passWord = std::forward<U>(passWord);
     }
 
+    /*如果发生异常，这是逻辑设计错误或严重错误，根本就不应当发生异常*/
+    inline void LoginFunction::doException() noexcept{
+        auto varLoginAns = thisData.ans/*当前堆栈获得数据所有权*/;
+        varLoginAns->hasError = true;
+        sstd_try {
+            std::rethrow_exception( std::current_exception() );
+        } sstd_catch(const QString & arg){
+            varLoginAns->ErrorString = QStringLiteral("exception:")+arg;
+        } sstd_catch (...) {
+            varLoginAns->ErrorString = QStringLiteral("exception:unknow");
+        }
+        this->finished( varLoginAns );
+    }
+
+    /*如果发生运行时已知错误将控制权转交给调用者*/
+    inline void LoginFunction::errorYield(){
+            this->finished( thisData.ans );
+            this->outerYiled();
+    }
+
+    /*如果用户主动调用quit()*/
+    void LoginFunction::doQuit() noexcept{
+        auto varLoginAns = thisData.ans/*当前堆栈获得数据所有权*/;
+        varLoginAns->hasError = true;
+        varLoginAns->ErrorString = QStringLiteral("quit:but not finished");
+        this->finished( thisData.ans );
+    }
+
     inline void LoginFunction::doRun(){
 
-#define error_goto(...)   varThisData->isErrorYield = true ; goto __VA_ARGS__
-#define error_yield(...)  __VA_ARGS__ : if(varThisData->isErrorYield){ \
-    varThisData->isErrorYield=false; \
-    this->finished( thisData.ans ); \
-    sstd_function_outer_yield() ; } \
-    static_assert (true )
+#define error_goto(...) if( varLoginAns->hasError ) { \
+    goto __VA_ARGS__; } static_assert (true)
 
         auto varLoginAns = thisData.ans/*当前堆栈获得数据所有权*/;
         auto varThisData = &thisData;
         auto varNetworkAccessManager = varLoginAns->networkAccessManager.get();
 
-        error_yield(just_start_label);
-
+just_start_label:errorYield();
         /*访问百度贴吧,检查网络，并获得一些cookies*/
         {
-            varLoginAns->hasError=false;
+            varThisData->ans->hasError = false;
             QNetworkRequest varRequest{ QStringLiteral(R"(https://tieba.baidu.com/index.html)") };
             auto varReply = varNetworkAccessManager->get( varRequest );
             varReply->connect( varReply , &QNetworkReply::finished,
-                             bindFunctionWithThis(  [varReply, varThisData](){
+                             bind( [varReply,varThisData](){
                 varReply->deleteLater();
                 if( varReply->error() != QNetworkReply::NoError ){
-                    varThisData->ans->hasError = true;
-                    varThisData->ans->ErrorString = varReply->errorString();
-                }
-            } ));
-            sstd_function_inner_yield();
+                    varThisData->ans->hasError=true;
+                    varThisData->ans->ErrorString = QVariant( varReply->error() ).toString() ;
+                } } ));
+            this->innerYield();
         }
-        if( varLoginAns->hasError ){
-            error_goto(just_start_label);
-        }
+        error_goto(just_start_label);
+
 
 
 
         /*登录完成*/
-        this->finished( thisData.ans );
+        varLoginAns->hasError = false;
+        varLoginAns->ErrorString.clear();
+        this->finished( varLoginAns );
 
-#undef error_yield
 #undef error_goto
     }
-
-
 
 }/*_theMainWindowFile*/
 
