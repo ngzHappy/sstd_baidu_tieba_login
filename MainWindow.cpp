@@ -491,14 +491,15 @@ function bd__cbs__dmwxux( theArg ){
                     Botan::X509::load_key(std::vector< std::uint8_t >{   varBegin, varEnd }));
             }
 
+            const static auto varAlg = "EME-PKCS1-v1_5"s;
             Botan::AutoSeeded_RNG varRNG;
-            Botan::PK_Encryptor_EME varEncode(*varPublicKey, varRNG, "EME-PKCS1-v1_5"s );
+            Botan::PK_Encryptor_EME varEncode(*varPublicKey, varRNG,varAlg);
             {
                 const auto varPassWordTmp = varThisData->passWord.toUtf8();
                 auto varBegin =
                     reinterpret_cast<const uint8_t *> (varPassWordTmp.constData());
                 auto varTmpPassWord =
-                varEncode.encrypt(varBegin, varPassWordTmp.size() ,varRNG);
+                    varEncode.encrypt(varBegin, varPassWordTmp.size() ,varRNG);
                 QByteArray varPassWord{ reinterpret_cast<const char *>(varTmpPassWord.data()) ,
                 static_cast<int>(varTmpPassWord.size())};
 
