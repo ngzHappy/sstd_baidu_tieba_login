@@ -203,8 +203,8 @@ namespace _theMainWindowFile{
         auto varNetworkAccessManager = varLoginAns->networkAccessManager.get();
 
 just_start_label:errorYield();
-        /*访问百度贴吧,检查网络，并获得一些cookies*/
-        {
+
+        {/*访问百度贴吧,检查网络，并获得一些cookies*/
             varThisData->ans->hasError = false;
             QNetworkRequest varRequest{ QStringLiteral(R"(https://tieba.baidu.com/index.html)") };
             auto varReply = varNetworkAccessManager->get( varRequest );
