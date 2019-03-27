@@ -48,8 +48,10 @@ namespace _theMainWindowFile{
 class MainWindowPrivate : public QObject {
 public:
     using LineItem = _theMainWindowFile::LineItem;
+
     LineItem userName;
     LineItem passWord;
+    QPushButton * runButton{ nullptr };
 
     std::map< QString /*username*/ , std::shared_ptr< _theMainWindowFile::LoginFunction > > allLogin;
 
@@ -121,6 +123,14 @@ MainWindow::MainWindow() :
         auto & var =
                 thisPrivate->passWord.construct(varLayout.get() );
         var.label->setText( trUtf8(u8R"(密码)") );
+    }
+
+    {
+        thisPrivate->runButton = sstd_virtual_new<QPushButton>();
+        varLayout->addWidget(thisPrivate->runButton);
+        thisPrivate->runButton->setText(trUtf8(u8R"(执行)"));
+        connect(thisPrivate->runButton, &QPushButton::clicked,
+            thisPrivate, &MainWindowPrivate::doLogin);
     }
 
     this->setLayout(varLayout.release());
