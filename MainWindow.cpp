@@ -73,10 +73,14 @@ public:
     }
 
     inline ~MainWindowPrivate() {
-        /*断开所有信号槽连接*/
-        this->disconnect();
+
+        /*断开与登录器之间的链接*/
+        for ( auto & varI : allLogin ) {
+            varI.second->disconnect( this );
+        }
         /*删除所有登录器*/
         allLogin.clear();
+
     }
 
     inline void doLogin() {
@@ -391,12 +395,13 @@ function bd__cbs__rl1it5( theArg ){
         } while (false);
         error_goto(get_token_label);
 
+        define_label(get_public_rsa_key_label);
         do {/*获得RSA key*/
             varThisData->ans->hasError = false;
 
             QUrl varUrl;
             {
-                QByteArray varUrlData = QByteArrayLiteral("https://passport.baidu.com/v2/getpublickey?token=");
+                QByteArray varUrlData = QByteArrayLiteral(u8R"(https://passport.baidu.com/v2/getpublickey?token=)");
                 varUrlData += varThisData->token;
                 auto varCurrentTime = getCurrentTimer();
                 std::pair< const QByteArray, const QByteArray > urlData[]{
@@ -414,6 +419,7 @@ function bd__cbs__rl1it5( theArg ){
             QNetworkRequest varRequest{ varUrl };
             varRequest.setRawHeader(QByteArrayLiteral("User-Agent"), userAgent());
             varRequest.setRawHeader(QByteArrayLiteral("Accept-Encoding"), QByteArrayLiteral("gzip, deflate"));
+            varRequest.setRawHeader(QByteArrayLiteral("Referer"), QByteArray("https://www.baidu.com"));
 
             auto varReply = varNetworkAccessManager->get(varRequest);
             varReply->connect(varReply, &QNetworkReply::finished,
@@ -421,22 +427,21 @@ function bd__cbs__rl1it5( theArg ){
 
                 varReply->deleteLater();
 
-                auto varJson =
-                    sstd::GZipCompressor::gzipDecompress(varReply->readAll());
+                auto varJson = varReply->readAll();
+                if (varJson.startsWith(QByteArrayLiteral("\x1F\x8B"))) {
+                    varJson = sstd::GZipCompressor::gzipDecompress(varJson);
+                }
 
                 if (varJson.isEmpty()) {
                     varThisData->ans->hasError = true;
-                    varThisData->ans->errorString = toRuntimeError(QStringLiteral(R"(null @ get token)"));
+                    varThisData->ans->errorString = toRuntimeError(QStringLiteral(R"(null @ get RSA public key)"));
                     return;
                 }
 
-                qDebug() << varJson;
-
-                /*
                 QJSEngine varEngine;
                 auto varAnsToken = varEngine.evaluate(QStringLiteral(R"(
 
-function bd__cbs__rl1it5( theArg ){
+function bd__cbs__dmwxux( theArg ){
     return theArg["data"]["token"];
 }
 
@@ -445,7 +450,7 @@ function bd__cbs__rl1it5( theArg ){
                 if (!varAnsToken.isError()) {
                     varThisData->token = varAnsToken.toString().toUtf8();
                     return;
-                }*/
+                } 
 
                 varThisData->ans->hasError = true;
                 varThisData->ans->errorString = toRuntimeError(QStringLiteral(R"(can not find BAIDUID!)"));
@@ -454,6 +459,7 @@ function bd__cbs__rl1it5( theArg ){
             this->innerYield();
 
         } while (false);
+        error_goto(get_public_rsa_key_label);
 
         {/*登录完成:*/
             varLoginAns->hasError = false;
