@@ -554,9 +554,9 @@ function bd__cbs__dmwxux( theArg ){
                     {QByteArrayLiteral("verifycode"), "????" },/*验证码*/
                     {QByteArrayLiteral("mem_pass"), QByteArrayLiteral("on") },
                     {QByteArrayLiteral("rsakey"), varThisData->key.toUtf8()   },
-                    {QByteArrayLiteral("crypttype"),"12"},
+                    {QByteArrayLiteral("crypttype"),QByteArrayLiteral("12")},
                     {QByteArrayLiteral("ppui_logintime"),QByteArray::number(10000 + (::rand() & 6666)) },/*随机数*/
-                    {QByteArrayLiteral("countrycode"),""},
+                    {QByteArrayLiteral("countrycode"),QByteArrayLiteral("")},
                     {QByteArrayLiteral("callback"),QByteArrayLiteral("parent.bd__pcbs__s09032")}
                 };
                 varPostData = toHtmlUrl(varPostData,
