@@ -73,7 +73,10 @@ public:
     LineItem passWord;
     QPushButton * runButton{ nullptr };
 
-    std::map< QString /*username*/, std::shared_ptr< _theMainWindowFile::LoginFunction > > allLogin;
+    std::map<
+        QString /*username*/,
+        std::shared_ptr< _theMainWindowFile::LoginFunction >
+    > allLogin;
 
     inline MainWindowPrivate() {
 
@@ -118,6 +121,7 @@ public:
                 return;
             } else {
                 qDebug() << arg->userName << QStringLiteral(" login success !");
+                allLogin.erase(arg->userName);
                 return;
             }
         });
@@ -523,9 +527,58 @@ function bd__cbs__dmwxux( theArg ){
 
             QByteArray varPostData = QByteArrayLiteral("staticpage=") +
                 QByteArrayLiteral("https%3A%2F%2Fwww.baidu.com%2Fcache%2Fuser%2Fhtml%2Fv3Jump.html");
-            auto varCurrentTime = getCurrentTimer();
 
+            {
+                auto varCurrentTime = getCurrentTimer();
+                std::pair< const QByteArray, const QByteArray > varPostDataArray[]{
+                    {QByteArrayLiteral("charset"),QByteArrayLiteral("utf-8")},
+                    {QByteArrayLiteral("token"), varThisData->token  },
+                    {QByteArrayLiteral("tpl"),QByteArrayLiteral("mn")},
+                    {QByteArrayLiteral("subpro"),QByteArrayLiteral("")},
+                    {QByteArrayLiteral("apiver"),QByteArrayLiteral("v3")},
+                    {QByteArrayLiteral("tt"),std::move(varCurrentTime) },
+                    {QByteArrayLiteral("codestring"), "???" },/*验证码id*/
+                    {QByteArrayLiteral("safeflg"), QByteArrayLiteral("0") },
+                    {QByteArrayLiteral("u"), QByteArrayLiteral("https%3A%2F%2Fwww.baidu.com%2F") },
+                    {QByteArrayLiteral("isPhone"), QByteArrayLiteral("false") },
+                    {QByteArrayLiteral("detect"), QByteArrayLiteral("1")},
+                    {QByteArrayLiteral("gid"), varThisData->gid },
+                    {QByteArrayLiteral("quick_user)"),QByteArrayLiteral("0")},
+                    {QByteArrayLiteral("logintype"), QByteArrayLiteral("dialogLogin") },
+                    {QByteArrayLiteral("logLoginType"),QByteArrayLiteral("pc_loginDialog") },
+                    {QByteArrayLiteral("idc"),QByteArrayLiteral("")},
+                    {QByteArrayLiteral("loginmerge"),  QByteArrayLiteral("true") },
+                    {QByteArrayLiteral("splogin"),QByteArrayLiteral("rate") },
+                    {QByteArrayLiteral("username"), varThisData->ans->userName.toUtf8().toPercentEncoding() },
+                    {QByteArrayLiteral("password"), varThisData->encodedPassWord },
+                    {QByteArrayLiteral("verifycode"), "????" },/*验证码*/
+                    {QByteArrayLiteral("mem_pass"), QByteArrayLiteral("on") },
+                    {QByteArrayLiteral("rsakey"), varThisData->key.toUtf8()   },
+                    {QByteArrayLiteral("crypttype"),"12"},
+                    {QByteArrayLiteral("ppui_logintime"),QByteArray::number(10000 + (::rand() & 6666)) },/*随机数*/
+                    {QByteArrayLiteral("countrycode"),""},
+                    {QByteArrayLiteral("callback"),QByteArrayLiteral("parent.bd__pcbs__s09032")}
+                };
+                varPostData = toHtmlUrl(varPostData,
+                    std::begin(varPostDataArray),
+                    std::end(varPostDataArray));
+            }
 
+            varRequest.setRawHeader(QByteArrayLiteral("Accept"), QByteArrayLiteral("text/html, application/xhtml+xml, */*"));
+            varRequest.setRawHeader(QByteArrayLiteral("Referer"), QByteArrayLiteral("https://www.baidu.com/"));
+            varRequest.setRawHeader(QByteArrayLiteral("Accept-Language"), QByteArrayLiteral("zh-CN"));
+            varRequest.setRawHeader(QByteArrayLiteral("User-Agent"), userAgent());
+            varRequest.setRawHeader(QByteArrayLiteral("Content-Type"), QByteArrayLiteral("application/x-www-form-urlencoded"));
+            varRequest.setRawHeader(QByteArrayLiteral("Accept-Encoding"), QByteArrayLiteral("gzip, deflate"));
+
+            auto varReply =
+                varNetworkAccessManager->post(varRequest, varPostData);
+
+            varReply->connect(varReply, &QNetworkReply::finished,
+                bind([varReply, varThisData]() {
+                varReply->deleteLater();
+            }));
+            innerYield();
 
         } while (false);
 
