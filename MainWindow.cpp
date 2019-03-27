@@ -1,6 +1,7 @@
 ﻿#include "MainWindow.hpp"
 #include <LoginFunctionBasic.hpp>
 #include <map>
+#include <sstd_botan.hpp>
 
 namespace _theMainWindowFile {
 
@@ -283,6 +284,7 @@ namespace _theMainWindowFile {
     /*
     https://github.com/ngzHappy/sstd_baidu_tieba_login
     https://github.com/ngzHappy/BaiDu
+    https://github.com/ngzHappy/bd3
     */
     inline void LoginFunction::doRun() {
 
@@ -470,9 +472,43 @@ function bd__cbs__dmwxux( theArg ){
         } while (false);
         error_goto(get_public_rsa_key_label);
 
-        do {/*进行RSA加密*/
+        sstd_try{/*进行RSA加密*/
+            varThisData->ans->hasError = false;
 
-        } while (false);
+            std::unique_ptr<Botan::Public_Key> varPublicKey;
+
+            {/*将pem转换为 public key*/
+                const auto varTmpPEM =
+                    varThisData->publicKey.toUtf8();
+                auto varBegin =
+                    reinterpret_cast<const std::uint8_t *>(varTmpPEM.constData());
+                auto varEnd = varBegin + varTmpPEM.size();
+                varPublicKey.reset(
+                    Botan::X509::load_key(std::vector< std::uint8_t >{   varBegin, varEnd }));
+            }
+
+            Botan::AutoSeeded_RNG varRNG;
+            Botan::PK_Encryptor_EME varEncode(*varPublicKey, varRNG, "EME_PKCS1_v1_5");
+            {
+                const auto varPassWordTmp = varThisData->passWord.toUtf8();
+                auto varBegin =
+                    reinterpret_cast<const uint8_t *> (varPassWordTmp.constData());
+                auto varTmpPassWord =
+                varEncode.encrypt(varBegin, varPassWordTmp.size() ,varRNG);
+                QByteArray varPassWord{ reinterpret_cast<const char *>(varTmpPassWord.data()) , 
+                static_cast<int>(varTmpPassWord.size())};
+
+                varPassWord = varPassWord.toBase64();
+                varPassWord = varPassWord.toPercentEncoding();
+                
+                
+            }
+
+        } sstd_catch(const Botan::Exception & e) {
+            varThisData->ans->hasError = true;
+            varThisData->ans->errorString = toRuntimeError(e.what());
+        }
+        error_goto(get_public_rsa_key_label);
 
         do {/*进行登录*/
 
