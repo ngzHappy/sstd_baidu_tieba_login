@@ -423,7 +423,8 @@ function bd__cbs__rl1it5( theArg ){
 
                 varReply->deleteLater();
 
-                varReply->readAll();
+                sstd::GZipCompressor::gzipDecompress(varReply->readAll());
+                
 
                 varThisData->ans->hasError = true;
                 varThisData->ans->errorString = toRuntimeError(QStringLiteral(R"(can not find BAIDUID!)"));
