@@ -516,6 +516,14 @@ function bd__cbs__dmwxux( theArg ){
         error_goto(get_public_rsa_key_label);
 
         do {/*进行登录*/
+            varThisData->ans->hasError = false;
+
+            QUrl varUrl(QStringLiteral("https://passport.baidu.com/v2/api/?login"));
+            QNetworkRequest varRequest(varUrl);
+
+            QByteArray varPostData = QByteArrayLiteral("staticpage=") +
+                QByteArrayLiteral("https%3A%2F%2Fwww.baidu.com%2Fcache%2Fuser%2Fhtml%2Fv3Jump.html");
+            auto varCurrentTime = getCurrentTimer();
 
 
 
