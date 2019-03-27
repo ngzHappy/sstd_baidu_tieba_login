@@ -372,12 +372,10 @@ namespace _theMainWindowFile {
 
                 QJSEngine varEngine;
                 auto varAnsToken = varEngine.evaluate(QStringLiteral(R"(
-
 function bd__cbs__rl1it5( theArg ){
     return theArg["data"]["token"];
 }
-
-)") + QString::fromUtf8(varJson));
+    )") + QString::fromUtf8(varJson));
 
                 if (!varAnsToken.isError()) {
                     varThisData->token = varAnsToken.toString().toUtf8();
@@ -402,12 +400,12 @@ function bd__cbs__rl1it5( theArg ){
                 varUrlData += varThisData->token;
                 auto varCurrentTime = getCurrentTimer();
                 std::pair< const QByteArray, const QByteArray > urlData[]{
-            { QByteArrayLiteral("tpl"),QByteArrayLiteral("mn") }                   ,
-            { QByteArrayLiteral("apiver"),QByteArrayLiteral("v3") }               ,
-            { QByteArrayLiteral("tt"),std::move(varCurrentTime) }        ,
-            { QByteArrayLiteral("class"),QByteArrayLiteral("login") }             ,
-            { QByteArrayLiteral("gid"), varThisData->gid }            ,
-            { QByteArrayLiteral("callback"),QByteArrayLiteral("bd__cbs__dmwxux") },
+                    { QByteArrayLiteral("tpl"),QByteArrayLiteral("mn") }                   ,
+                    { QByteArrayLiteral("apiver"),QByteArrayLiteral("v3") }               ,
+                    { QByteArrayLiteral("tt"),std::move(varCurrentTime) }        ,
+                    { QByteArrayLiteral("class"),QByteArrayLiteral("login") }             ,
+                    { QByteArrayLiteral("gid"), varThisData->gid }            ,
+                    { QByteArrayLiteral("callback"),QByteArrayLiteral("bd__cbs__dmwxux") },
                 };
                 varUrlData = toHtmlUrl(std::move(varUrlData), std::begin(urlData), std::end(urlData));
                 varUrl.setUrl(std::move(varUrlData));
@@ -423,8 +421,31 @@ function bd__cbs__rl1it5( theArg ){
 
                 varReply->deleteLater();
 
-                sstd::GZipCompressor::gzipDecompress(varReply->readAll());
-                
+                auto varJson =
+                    sstd::GZipCompressor::gzipDecompress(varReply->readAll());
+
+                if (varJson.isEmpty()) {
+                    varThisData->ans->hasError = true;
+                    varThisData->ans->errorString = toRuntimeError(QStringLiteral(R"(null @ get token)"));
+                    return;
+                }
+
+                qDebug() << varJson;
+
+                /*
+                QJSEngine varEngine;
+                auto varAnsToken = varEngine.evaluate(QStringLiteral(R"(
+
+function bd__cbs__rl1it5( theArg ){
+    return theArg["data"]["token"];
+}
+
+)") + QString::fromUtf8(varJson));
+
+                if (!varAnsToken.isError()) {
+                    varThisData->token = varAnsToken.toString().toUtf8();
+                    return;
+                }*/
 
                 varThisData->ans->hasError = true;
                 varThisData->ans->errorString = toRuntimeError(QStringLiteral(R"(can not find BAIDUID!)"));
