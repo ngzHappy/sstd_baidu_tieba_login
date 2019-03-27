@@ -15,7 +15,8 @@ namespace _theMainWindowFile{
     };
 
     class LoginFunction final : public LoginFunctionBasic {
-    public:
+        friend class ::MainWindowPrivate;
+    private:
         class ThisData{
         public:
             std::shared_ptr< LoginFunctionAns > ans;
@@ -166,12 +167,13 @@ namespace _theMainWindowFile{
     inline void LoginFunction::doException() noexcept{
         auto varLoginAns = thisData.ans/*当前堆栈获得数据所有权*/;
         varLoginAns->hasError = true;
+        using namespace _theMainWindowFile;
         sstd_try {
             std::rethrow_exception( std::current_exception() );
         } sstd_catch(const QString & arg){
-            varLoginAns->ErrorString = QStringLiteral("exception:")+arg;
+            varLoginAns->ErrorString = getExceptionStart()+arg;
         } sstd_catch (...) {
-            varLoginAns->ErrorString = QStringLiteral("exception:unknow");
+            varLoginAns->ErrorString = getExceptionStart()+QStringLiteral("unknow");
         }
         this->finished( varLoginAns );
     }
@@ -186,7 +188,8 @@ namespace _theMainWindowFile{
     void LoginFunction::doQuit() noexcept{
         auto varLoginAns = thisData.ans/*当前堆栈获得数据所有权*/;
         varLoginAns->hasError = true;
-        varLoginAns->ErrorString = QStringLiteral("quit:but not finished");
+        using namespace _theMainWindowFile;
+        varLoginAns->ErrorString = getQuitStart() + QStringLiteral("but not finished");
         this->finished( thisData.ans );
     }
 
@@ -215,7 +218,6 @@ just_start_label:errorYield();
             this->innerYield();
         }
         error_goto(just_start_label);
-
 
         /*登录完成*/
         varLoginAns->hasError = false;
