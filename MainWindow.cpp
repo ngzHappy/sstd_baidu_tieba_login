@@ -32,6 +32,8 @@ namespace _theMainWindowFile {
             QString passWord;
             QByteArray token;
             QByteArray gid;
+            QString key;
+            QString publicKey;
         }thisData;
     public:
         template<typename T, typename U>
@@ -75,8 +77,8 @@ public:
     inline ~MainWindowPrivate() {
 
         /*断开与登录器之间的链接*/
-        for ( auto & varI : allLogin ) {
-            varI.second->disconnect( this );
+        for (auto & varI : allLogin) {
+            varI.second->disconnect(this);
         }
         /*删除所有登录器*/
         allLogin.clear();
@@ -210,7 +212,7 @@ namespace _theMainWindowFile {
 
         constexpr const static char toHex1[] = {
             '8','9','A','B','C','D','E','F',
-            '8','9','A','B','C','D','E','F',
+            '8','A','9','F','D','C','B','E',
         };
 
         class Array {
@@ -346,11 +348,11 @@ namespace _theMainWindowFile {
                     { QByteArrayLiteral("tpl"),QByteArrayLiteral("mn")}                   ,
                     { QByteArrayLiteral("apiver"),QByteArrayLiteral("v3") }               ,
                     { QByteArrayLiteral("tt"),std::move(varCurrentTime) }                 ,
-                    { QByteArrayLiteral("class"),QByteArrayLiteral("login") }                                ,
+                    { QByteArrayLiteral("class"),QByteArrayLiteral("login") }             ,
                     { QByteArrayLiteral("gid"), varThisData->gid }                        ,
-                    { QByteArrayLiteral("loginversion"),QByteArrayLiteral("v4") }   ,
+                    { QByteArrayLiteral("loginversion"),QByteArrayLiteral("v4") }         ,
                     { QByteArrayLiteral("logintype"),QByteArrayLiteral("dialogLogin") }   ,
-                    { QByteArrayLiteral("traceid"),QByteArrayLiteral("")},
+                    { QByteArrayLiteral("traceid"),QByteArrayLiteral("")}                 ,
                     { QByteArrayLiteral("callback"),QByteArrayLiteral("bd__cbs__rl1it5") }/*回调的函数名称，这里可以是随机的*/,
                 };
                 varUrlData = toHtmlUrl(std::move(varUrlData), std::begin(urlData), std::end(urlData));
@@ -405,12 +407,12 @@ function bd__cbs__rl1it5( theArg ){
                 varUrlData += varThisData->token;
                 auto varCurrentTime = getCurrentTimer();
                 std::pair< const QByteArray, const QByteArray > urlData[]{
-                    { QByteArrayLiteral("tpl"),QByteArrayLiteral("mn") }                   ,
+                    { QByteArrayLiteral("tpl"),QByteArrayLiteral("mn") }                  ,
                     { QByteArrayLiteral("apiver"),QByteArrayLiteral("v3") }               ,
-                    { QByteArrayLiteral("tt"),std::move(varCurrentTime) }        ,
+                    { QByteArrayLiteral("tt"),std::move(varCurrentTime) }                 ,
                     { QByteArrayLiteral("class"),QByteArrayLiteral("login") }             ,
-                    { QByteArrayLiteral("gid"), varThisData->gid }            ,
-                    { QByteArrayLiteral("callback"),QByteArrayLiteral("bd__cbs__dmwxux") },
+                    { QByteArrayLiteral("gid"), varThisData->gid }                        ,
+                    { QByteArrayLiteral("callback"),QByteArrayLiteral("bd__cbs__dmwxux") }/*回调的函数名称，这里可以是随机的*/,
                 };
                 varUrlData = toHtmlUrl(std::move(varUrlData), std::begin(urlData), std::end(urlData));
                 varUrl.setUrl(std::move(varUrlData));
@@ -423,7 +425,7 @@ function bd__cbs__rl1it5( theArg ){
 
             auto varReply = varNetworkAccessManager->get(varRequest);
             varReply->connect(varReply, &QNetworkReply::finished,
-                bind([varReply, varThisData, varNetworkAccessManager]() {
+                bind([varReply, varThisData]() {
 
                 varReply->deleteLater();
 
@@ -439,21 +441,28 @@ function bd__cbs__rl1it5( theArg ){
                 }
 
                 QJSEngine varEngine;
-                auto varAnsToken = varEngine.evaluate(QStringLiteral(R"(
-
+                auto varAnsJson = varEngine.evaluate(QStringLiteral(R"(
+/* bd__cbs__dmwxux  */
 function bd__cbs__dmwxux( theArg ){
-    return theArg["data"]["token"];
+    return theArg ;
 }
 
 )") + QString::fromUtf8(varJson));
 
-                if (!varAnsToken.isError()) {
-                    varThisData->token = varAnsToken.toString().toUtf8();
-                    return;
-                } 
+                if (!varAnsJson.isError()) {
+                    auto var = varAnsJson.property(QStringLiteral("pubkey"));
+                    if (!var.isError()) {
+                        varThisData->publicKey = var.toString();
+                        var = varAnsJson.property(QStringLiteral("key"));
+                        if (!var.isError()) {
+                            varThisData->key = var.toString();
+                            return;
+                        }
+                    }
+                }
 
                 varThisData->ans->hasError = true;
-                varThisData->ans->errorString = toRuntimeError(QStringLiteral(R"(can not find BAIDUID!)"));
+                varThisData->ans->errorString = toRuntimeError(QStringLiteral(R"(can not find public RSA key!)"));
 
             }));
             this->innerYield();
@@ -461,11 +470,19 @@ function bd__cbs__dmwxux( theArg ){
         } while (false);
         error_goto(get_public_rsa_key_label);
 
-        {/*登录完成:*/
+        do {/*进行RSA加密*/
+
+        } while (false);
+
+        do {/*进行登录*/
+
+        } while (false);
+
+        do {/*登录完成:*/
             varLoginAns->hasError = false;
             varLoginAns->errorString.clear();
             this->finished(varLoginAns);
-        }
+        } while (false);
 
 #undef error_goto
 #undef define_label
