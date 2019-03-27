@@ -10,6 +10,9 @@ public:
     bool hasError{ false };
     QString ErrorString{ QStringLiteral("there is a error but not set!") };
 public:
+    QByteArray baiduLoginGID;
+
+public:
     LoginFunctionAns();
 private:
     sstd_class(LoginFunctionAns);

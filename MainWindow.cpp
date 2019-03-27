@@ -184,6 +184,47 @@ namespace _theMainWindowFile {
         return QByteArray::number(QDateTime::currentMSecsSinceEpoch());
     }
 
+    /*生成一个GID*/
+    inline QByteArray getGID() {
+
+        QByteArray ans{ 35,Qt::Uninitialized };
+
+        constexpr const static char toHex0[] = {
+            '0','1','2','3','4','5','6','7',
+            '8','9','A','B','C','D','E','F',
+        };
+
+        constexpr const static char toHex1[] = {
+            '8','9','A','B','C','D','E','F',
+            '8','9','A','B','C','D','E','F',
+        };
+
+        class Array {
+            char data[35];
+        public:
+            Array() :data{
+                toHex0[std::rand() & 15],toHex0[std::rand() & 15],toHex0[std::rand() & 15],
+                toHex0[std::rand() & 15],toHex0[std::rand() & 15],toHex0[std::rand() & 15],
+                toHex0[std::rand() & 15], '-',toHex0[std::rand() & 15],
+                toHex0[std::rand() & 15],toHex0[std::rand() & 15],toHex0[std::rand() & 15],
+                '-','4',toHex0[std::rand() & 15],
+                toHex0[std::rand() & 15],toHex0[std::rand() & 15], '-',
+                toHex1[std::rand() & 15],toHex0[std::rand() & 15],toHex0[std::rand() & 15],
+                toHex0[std::rand() & 15],'-',toHex0[std::rand() & 15],
+                toHex0[std::rand() & 15],toHex0[std::rand() & 15],toHex0[std::rand() & 15],
+                toHex0[std::rand() & 15],toHex0[std::rand() & 15],toHex0[std::rand() & 15],
+                toHex0[std::rand() & 15],toHex0[std::rand() & 15],toHex0[std::rand() & 15],
+                toHex0[std::rand() & 15],toHex0[std::rand() & 15]
+            } {
+            }
+        };
+
+        ::new(const_cast<char *>(ans.constData())) Array;
+
+        return std::move(ans);
+
+    }
+
     /*如果发生异常，
     这是程序逻辑设计错误或严重运行时错误，
     用户应当删除此登录类*/
@@ -193,13 +234,13 @@ namespace _theMainWindowFile {
         using namespace _theMainWindowFile;
         sstd_try{
             std::rethrow_exception(std::current_exception());
-        } sstd_catch(const QString & arg) {
-            varLoginAns->ErrorString = getExceptionStart() + arg;
-        } sstd_catch(...) {
-            varLoginAns->ErrorString = getExceptionStart() + QStringLiteral("unknow");
-        }
-        this->finished(varLoginAns);
+    } sstd_catch(const QString & arg) {
+        varLoginAns->ErrorString = getExceptionStart() + arg;
+    } sstd_catch(...) {
+        varLoginAns->ErrorString = getExceptionStart() + QStringLiteral("unknow");
     }
+    this->finished(varLoginAns);
+}
 
     /*如果发生运行时已知错误将控制权转交给调用者*/
     inline void LoginFunction::errorYield() {
@@ -228,6 +269,12 @@ namespace _theMainWindowFile {
         auto varLoginAns = thisData.ans/*当前堆栈获得数据所有权*/;
         auto varThisData = &thisData;
         auto varNetworkAccessManager = varLoginAns->networkAccessManager.get();
+
+        {/*初始化数据*/
+            varLoginAns->baiduLoginGID = getGID();
+
+        }
+
 #if defined(error_goto)
 #error should not define error_goto
 #endif
