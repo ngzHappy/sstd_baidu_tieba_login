@@ -301,7 +301,7 @@ namespace _theMainWindowFile {
 #define define_label(...) __VA_ARGS__ : errorYield()
 
         define_label(just_start_label);
-        {/*访问百度:检查网络，并获得一些cookies*/
+        do {/*访问百度:检查网络，并获得一些cookies*/
             varThisData->ans->hasError = false;
 
             QNetworkRequest varRequest{ QStringLiteral(R"(https://www.baidu.com)") };
@@ -327,11 +327,11 @@ namespace _theMainWindowFile {
 
             }));
             this->innerYield();
-        }
+        } while (false);
         error_goto(just_start_label);
 
         define_label(get_token_label);
-        {
+        do {
             varThisData->ans->hasError = false;
             QUrl varUrl;
             {
@@ -390,8 +390,48 @@ function bd__cbs__rl1it5( theArg ){
             }));
             this->innerYield();
 
-        }
+        } while (false);
         error_goto(get_token_label);
+
+        do {/*获得RSA key*/
+            varThisData->ans->hasError = false;
+
+            QUrl varUrl;
+            {
+                QByteArray varUrlData = QByteArrayLiteral("https://passport.baidu.com/v2/getpublickey?token=");
+                varUrlData += varThisData->token;
+                auto varCurrentTime = getCurrentTimer();
+                std::pair< const QByteArray, const QByteArray > urlData[]{
+            { QByteArrayLiteral("tpl"),QByteArrayLiteral("mn") }                   ,
+            { QByteArrayLiteral("apiver"),QByteArrayLiteral("v3") }               ,
+            { QByteArrayLiteral("tt"),std::move(varCurrentTime) }        ,
+            { QByteArrayLiteral("class"),QByteArrayLiteral("login") }             ,
+            { QByteArrayLiteral("gid"), varThisData->gid }            ,
+            { QByteArrayLiteral("callback"),QByteArrayLiteral("bd__cbs__dmwxux") },
+                };
+                varUrlData = toHtmlUrl(std::move(varUrlData), std::begin(urlData), std::end(urlData));
+                varUrl.setUrl(std::move(varUrlData));
+            }
+
+            QNetworkRequest varRequest{ varUrl };
+            varRequest.setRawHeader(QByteArrayLiteral("User-Agent"), userAgent());
+            varRequest.setRawHeader(QByteArrayLiteral("Accept-Encoding"), QByteArrayLiteral("gzip, deflate"));
+
+            auto varReply = varNetworkAccessManager->get(varRequest);
+            varReply->connect(varReply, &QNetworkReply::finished,
+                bind([varReply, varThisData, varNetworkAccessManager]() {
+
+                varReply->deleteLater();
+
+                varReply->readAll();
+
+                varThisData->ans->hasError = true;
+                varThisData->ans->errorString = toRuntimeError(QStringLiteral(R"(can not find BAIDUID!)"));
+
+            }));
+            this->innerYield();
+
+        } while (false);
 
         {/*登录完成:*/
             varLoginAns->hasError = false;
