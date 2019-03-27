@@ -172,7 +172,7 @@ namespace _theMainWindowFile {
     }
 
     /*如果发生异常，
-    这是程序逻辑设计错误或严重运行时错误（比如用户不存在，用户名不合法……），
+    这是程序逻辑设计错误或严重运行时错误，
     用户应当删除此登录类*/
     inline void LoginFunction::doException() noexcept {
         auto varLoginAns = thisData.ans/*当前堆栈获得数据所有权*/;
@@ -217,7 +217,7 @@ namespace _theMainWindowFile {
 
     just_start_label:errorYield();
 
-    {/*访问百度贴吧,检查网络，并获得一些cookies*/
+    {/*访问百度贴吧:检查网络，并获得一些cookies*/
         varThisData->ans->hasError = false;
         QNetworkRequest varRequest{ QStringLiteral(R"(https://tieba.baidu.com/index.html)") };
         auto varReply = varNetworkAccessManager->get(varRequest);
@@ -232,10 +232,14 @@ namespace _theMainWindowFile {
     }
     error_goto(just_start_label);
 
-    /*登录完成*/
-    varLoginAns->hasError = false;
-    varLoginAns->ErrorString.clear();
-    this->finished(varLoginAns);
+    {
+    }
+
+    {/*登录完成:*/
+        varLoginAns->hasError = false;
+        varLoginAns->ErrorString.clear();
+        this->finished(varLoginAns);
+    }
 
 #undef error_goto
     }
