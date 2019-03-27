@@ -1,5 +1,6 @@
 ﻿#include "MainWindow.hpp"
 #include <LoginFunctionBasic.hpp>
+#include <map>
 
 namespace _theMainWindowFile{
 
@@ -14,7 +15,7 @@ namespace _theMainWindowFile{
     };
 
     class LoginFunction final : public LoginFunctionBasic {
-    private:
+    public:
         class ThisData{
         public:
             std::shared_ptr< LoginFunctionAns > ans;
@@ -32,14 +33,71 @@ namespace _theMainWindowFile{
         sstd_class(LoginFunction);
     };
 
+    inline QString getExceptionStart(){
+        return QStringLiteral("&&exception:");
+    }
+
+    inline QString getQuitStart(){
+        return QStringLiteral("&&quit:");
+    }
+
 
 }/*_theMainWindowFile*/
 
-class MainWindowPrivate{
+class MainWindowPrivate : public QObject {
 public:
     using LineItem = _theMainWindowFile::LineItem;
     LineItem userName;
     LineItem passWord;
+
+    std::map< QString /*username*/ , std::shared_ptr< _theMainWindowFile::LoginFunction > > allLogin;
+
+    inline MainWindowPrivate(){
+
+    }
+
+    inline ~MainWindowPrivate(){
+        /*断开所有信号槽连接*/
+        this->disconnect();
+        /*删除所有登录器*/
+        allLogin.clear();
+    }
+
+    inline void doLogin(){
+
+        const auto varUserName = userName.text->text().trimmed();
+        const auto varPassWord = passWord.text->text();
+        auto varCurrentItem = allLogin.find( varUserName );
+
+        /*重新设置密码，再次开始*/
+        if( varCurrentItem!=allLogin.end() ){
+             varCurrentItem->second->thisData.passWord = passWord.text->text();
+             varCurrentItem->second->start();
+             return;
+        }
+
+        auto varFunction =
+            sstd_make_start_function<_theMainWindowFile::LoginFunction>(
+                    varUserName , varPassWord ).getFunction();
+        allLogin.emplace( varUserName , varFunction );
+        QObject::connect( varFunction.get(), &_theMainWindowFile::LoginFunction::finished,
+                          this , [this]( std::shared_ptr< LoginFunctionAns > arg ){
+            if( arg->hasError ){
+                using namespace _theMainWindowFile;
+                if( arg->ErrorString.startsWith( getQuitStart() )||(arg->ErrorString.startsWith(getExceptionStart()))){
+                    allLogin.erase( arg->userName );
+                }
+                qDebug() << arg->userName << QStringLiteral( " login with error :") << arg->ErrorString ;
+                return;
+            }else{
+                qDebug() << arg->userName << QStringLiteral( " login success !")  ;
+                return;
+            }
+        } );
+        varFunction->start();
+
+    }
+
 private:
     sstd_class(MainWindowPrivate);
 };
@@ -102,7 +160,9 @@ namespace _theMainWindowFile{
         thisData.passWord = std::forward<U>(passWord);
     }
 
-    /*如果发生异常，这是逻辑设计错误或严重错误，根本就不应当发生异常*/
+    /*如果发生异常，
+    这是程序逻辑设计错误或严重运行时错误（比如用户不存在，用户名不合法……），
+    用户应当删除此登录类*/
     inline void LoginFunction::doException() noexcept{
         auto varLoginAns = thisData.ans/*当前堆栈获得数据所有权*/;
         varLoginAns->hasError = true;
@@ -155,8 +215,6 @@ just_start_label:errorYield();
             this->innerYield();
         }
         error_goto(just_start_label);
-
-
 
 
         /*登录完成*/
