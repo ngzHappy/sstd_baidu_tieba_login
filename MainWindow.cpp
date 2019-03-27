@@ -3,6 +3,8 @@
 #include <map>
 #include <sstd_botan.hpp>
 
+using namespace std::string_literals;
+
 namespace _theMainWindowFile {
 
     class LineItem {
@@ -35,6 +37,8 @@ namespace _theMainWindowFile {
             QByteArray gid;
             QString key;
             QString publicKey;
+            QByteArray encodedPassWord;
+
         }thisData;
     public:
         template<typename T, typename U>
@@ -488,20 +492,20 @@ function bd__cbs__dmwxux( theArg ){
             }
 
             Botan::AutoSeeded_RNG varRNG;
-            Botan::PK_Encryptor_EME varEncode(*varPublicKey, varRNG, "EME_PKCS1_v1_5");
+            Botan::PK_Encryptor_EME varEncode(*varPublicKey, varRNG, "EME-PKCS1-v1_5"s );
             {
                 const auto varPassWordTmp = varThisData->passWord.toUtf8();
                 auto varBegin =
                     reinterpret_cast<const uint8_t *> (varPassWordTmp.constData());
                 auto varTmpPassWord =
                 varEncode.encrypt(varBegin, varPassWordTmp.size() ,varRNG);
-                QByteArray varPassWord{ reinterpret_cast<const char *>(varTmpPassWord.data()) , 
+                QByteArray varPassWord{ reinterpret_cast<const char *>(varTmpPassWord.data()) ,
                 static_cast<int>(varTmpPassWord.size())};
 
                 varPassWord = varPassWord.toBase64();
                 varPassWord = varPassWord.toPercentEncoding();
-                
-                
+
+                varThisData->encodedPassWord = std::move(varPassWord);
             }
 
         } sstd_catch(const Botan::Exception & e) {
@@ -511,6 +515,8 @@ function bd__cbs__dmwxux( theArg ){
         error_goto(get_public_rsa_key_label);
 
         do {/*进行登录*/
+
+
 
         } while (false);
 
