@@ -14,6 +14,15 @@ namespace _theMainWindowFile {
         sstd_class(LineItem);
     };
 
+    class NetworkCookieJar : public QNetworkCookieJar {
+        using Super = QNetworkCookieJar;
+    public:
+        using Super::allCookies;
+        using Super::setAllCookies;
+        inline static void save(QNetworkCookieJar *, const QString &);
+        inline static void load(QNetworkCookieJar *, const QString &);
+    };
+
     class LoginFunction final : public LoginFunctionBasic {
         friend class ::MainWindowPrivate;
     private:
@@ -170,6 +179,11 @@ namespace _theMainWindowFile {
         thisData.passWord = std::forward<U>(passWord);
     }
 
+    /*获得当前时间*/
+    inline QByteArray getCurrentTimer() {
+        return QByteArray::number(QDateTime::currentMSecsSinceEpoch());
+    }
+
     /*如果发生异常，
     这是程序逻辑设计错误或严重运行时错误，
     用户应当删除此登录类*/
@@ -205,6 +219,10 @@ namespace _theMainWindowFile {
         this->finished(thisData.ans);
     }
 
+    /*
+    https://github.com/ngzHappy/sstd_baidu_tieba_login
+    https://github.com/ngzHappy/BaiDu
+    */
     inline void LoginFunction::doRun() {
 
         auto varLoginAns = thisData.ans/*当前堆栈获得数据所有权*/;
@@ -216,32 +234,82 @@ namespace _theMainWindowFile {
 #define error_goto(...) if( varLoginAns->hasError ) { \
     goto __VA_ARGS__; } static_assert (true)
 
-    just_start_label:errorYield();
-    {/*访问百度贴吧:检查网络，并获得一些cookies*/
-        varThisData->ans->hasError = false;
-        QNetworkRequest varRequest{ QStringLiteral(R"(https://tieba.baidu.com/index.html)") };
-        auto varReply = varNetworkAccessManager->get(varRequest);
-        varReply->connect(varReply, &QNetworkReply::finished,
-            bind([varReply, varThisData]() {
-            varReply->deleteLater();
-            if (varReply->error() != QNetworkReply::NoError) {
-                varThisData->ans->hasError = true;
-                varThisData->ans->ErrorString = QVariant(varReply->error()).toString();
-            } }));
-        this->innerYield();
-    }
-    error_goto(just_start_label);
+        just_start_label:errorYield();
+        {/*访问百度贴吧:检查网络，并获得一些cookies*/
+            varThisData->ans->hasError = false;
+            QNetworkRequest varRequest{ QStringLiteral(R"(https://tieba.baidu.com/index.html)") };
+            auto varReply = varNetworkAccessManager->get(varRequest);
+            varReply->connect(varReply, &QNetworkReply::finished,
+                bind([varReply, varThisData]() {
+                varReply->deleteLater();
+                if (varReply->error() != QNetworkReply::NoError) {
+                    varThisData->ans->hasError = true;
+                    varThisData->ans->ErrorString = QVariant(varReply->error()).toString();
+                } }));
+            this->innerYield();
+        }
+        error_goto(just_start_label);
 
-    {
-    }
+        {
+        }
 
-    {/*登录完成:*/
-        varLoginAns->hasError = false;
-        varLoginAns->ErrorString.clear();
-        this->finished(varLoginAns);
-    }
+        {/*登录完成:*/
+            varLoginAns->hasError = false;
+            varLoginAns->ErrorString.clear();
+            this->finished(varLoginAns);
+        }
 
 #undef error_goto
+    }
+
+    inline constexpr auto dataStreamVersion() {
+        return QDataStream::Qt_5_12;
+    }
+
+    inline void _theMainWindowFile::NetworkCookieJar::save(QNetworkCookieJar * arg, const QString & argFilePath) {
+        auto var = reinterpret_cast<NetworkCookieJar *>(arg);
+        QFile varFile{ argFilePath };
+        if (!varFile.open(QIODevice::WriteOnly)) {
+            qWarning() << QStringLiteral("can not write : ") + argFilePath << endl;
+        }
+        QDataStream varStream{ &varFile };
+        varStream.setVersion(dataStreamVersion());
+        const auto varCookies = var->allCookies();
+        varStream << static_cast<std::int32_t>(varCookies.size());
+        for (const auto & varI : varCookies) {
+            varStream << varI.name() << varI.value();
+        }
+    }
+
+    inline void _theMainWindowFile::NetworkCookieJar::load(QNetworkCookieJar * arg, const QString & argFilePath) {
+        auto var = reinterpret_cast<NetworkCookieJar *>(arg);
+        QFile varFile{ argFilePath };
+        if (!varFile.open(QIODevice::ReadOnly)) {
+            qWarning() << QStringLiteral("can not read : ") + argFilePath << endl;
+        }
+
+        QDataStream varStream{ &varFile };
+        varStream.setVersion(dataStreamVersion());
+
+        std::int32_t varCookieSize{ -1 };
+        varStream >> varCookieSize;
+        if (varCookieSize < 1) {
+            qWarning() << QStringLiteral("empty cookies?") << endl;
+            return;
+        }
+        QList<QNetworkCookie> varCookies;
+        varCookies.reserve(varCookieSize);
+
+        {
+            QByteArray varName;
+            QByteArray varValue;
+            varStream >> varName;
+            varStream >> varValue;
+            varCookies.push_back(QNetworkCookie{ std::move(varName) , std::move(varValue) });
+        }
+
+        var->setAllCookies(std::move(varCookies));
+
     }
 
 }/*_theMainWindowFile*/
