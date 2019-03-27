@@ -2,9 +2,9 @@
 #include <LoginFunctionBasic.hpp>
 #include <map>
 
-namespace _theMainWindowFile{
+namespace _theMainWindowFile {
 
-    class LineItem{
+    class LineItem {
     public:
         QLabel * label;
         QLineEdit * text;
@@ -17,28 +17,28 @@ namespace _theMainWindowFile{
     class LoginFunction final : public LoginFunctionBasic {
         friend class ::MainWindowPrivate;
     private:
-        class ThisData{
+        class ThisData {
         public:
             std::shared_ptr< LoginFunctionAns > ans;
             QString passWord;
         }thisData;
     public:
-        template<typename T,typename U>
-        inline LoginFunction(T && userName,U && passWord);
+        template<typename T, typename U>
+        inline LoginFunction(T && userName, U && passWord);
     protected:
-        inline void doRun() override ;
-        inline void doQuit() noexcept override ;
-        inline void doException() noexcept override ;
+        inline void doRun() override;
+        inline void doQuit() noexcept override;
+        inline void doException() noexcept override;
         inline void errorYield();
     private:
         sstd_class(LoginFunction);
     };
 
-    inline QString getExceptionStart(){
+    inline QString getExceptionStart() {
         return QStringLiteral("&&exception:");
     }
 
-    inline QString getQuitStart(){
+    inline QString getQuitStart() {
         return QStringLiteral("&&quit:");
     }
 
@@ -53,50 +53,50 @@ public:
     LineItem passWord;
     QPushButton * runButton{ nullptr };
 
-    std::map< QString /*username*/ , std::shared_ptr< _theMainWindowFile::LoginFunction > > allLogin;
+    std::map< QString /*username*/, std::shared_ptr< _theMainWindowFile::LoginFunction > > allLogin;
 
-    inline MainWindowPrivate(){
+    inline MainWindowPrivate() {
 
     }
 
-    inline ~MainWindowPrivate(){
+    inline ~MainWindowPrivate() {
         /*断开所有信号槽连接*/
         this->disconnect();
         /*删除所有登录器*/
         allLogin.clear();
     }
 
-    inline void doLogin(){
+    inline void doLogin() {
 
         const auto varUserName = userName.text->text().trimmed();
         const auto varPassWord = passWord.text->text();
-        auto varCurrentItem = allLogin.find( varUserName );
+        auto varCurrentItem = allLogin.find(varUserName);
 
         /*重新设置密码，再次开始*/
-        if( varCurrentItem!=allLogin.end() ){
-             varCurrentItem->second->thisData.passWord = passWord.text->text();
-             varCurrentItem->second->start();
-             return;
+        if (varCurrentItem != allLogin.end()) {
+            varCurrentItem->second->thisData.passWord = passWord.text->text();
+            varCurrentItem->second->start();
+            return;
         }
 
         auto varFunction =
             sstd_make_start_function<_theMainWindowFile::LoginFunction>(
-                    varUserName , varPassWord ).getFunction();
-        allLogin.emplace( varUserName , varFunction );
-        QObject::connect( varFunction.get(), &_theMainWindowFile::LoginFunction::finished,
-                          this , [this]( std::shared_ptr< LoginFunctionAns > arg ){
-            if( arg->hasError ){
+                varUserName, varPassWord).getFunction();
+        allLogin.emplace(varUserName, varFunction);
+        QObject::connect(varFunction.get(), &_theMainWindowFile::LoginFunction::finished,
+            this, [this](std::shared_ptr< LoginFunctionAns > arg) {
+            if (arg->hasError) {
                 using namespace _theMainWindowFile;
-                if( arg->ErrorString.startsWith( getQuitStart() )||(arg->ErrorString.startsWith(getExceptionStart()))){
-                    allLogin.erase( arg->userName );
+                if (arg->ErrorString.startsWith(getQuitStart()) || (arg->ErrorString.startsWith(getExceptionStart()))) {
+                    allLogin.erase(arg->userName);
                 }
-                qDebug() << arg->userName << QStringLiteral( " login with error :") << arg->ErrorString ;
+                qDebug() << arg->userName << QStringLiteral(" login with error :") << arg->ErrorString;
                 return;
-            }else{
-                qDebug() << arg->userName << QStringLiteral( " login success !")  ;
+            } else {
+                qDebug() << arg->userName << QStringLiteral(" login success !");
                 return;
             }
-        } );
+        });
         varFunction->start();
 
     }
@@ -107,22 +107,22 @@ private:
 
 MainWindow::MainWindow() :
     thisPrivate{ sstd_new<MainWindowPrivate>() } {
-    this->setMinimumWidth( 512 );
-    this->setMinimumHeight( 128 );
+    this->setMinimumWidth(512);
+    this->setMinimumHeight(128);
 
     auto varLayout =
-            sstd_make_virtual_unique<QVBoxLayout>();
+        sstd_make_virtual_unique<QVBoxLayout>();
 
     {
         auto & var =
-                thisPrivate->userName.construct(varLayout.get() );
-        var.label->setText( trUtf8(u8R"(用户名)") );
+            thisPrivate->userName.construct(varLayout.get());
+        var.label->setText(trUtf8(u8R"(用户名)"));
     }
 
     {
         auto & var =
-                thisPrivate->passWord.construct(varLayout.get() );
-        var.label->setText( trUtf8(u8R"(密码)") );
+            thisPrivate->passWord.construct(varLayout.get());
+        var.label->setText(trUtf8(u8R"(密码)"));
     }
 
     {
@@ -137,25 +137,25 @@ MainWindow::MainWindow() :
 
 }
 
-MainWindow::~MainWindow(){
+MainWindow::~MainWindow() {
     delete thisPrivate;
 }
 
-namespace _theMainWindowFile{
+namespace _theMainWindowFile {
 
-    inline LineItem::LineItem(){
+    inline LineItem::LineItem() {
     }
 
-    inline LineItem & LineItem::construct(QBoxLayout * arg){
+    inline LineItem & LineItem::construct(QBoxLayout * arg) {
 
         auto varLineLayout =
-                sstd_virtual_new< QHBoxLayout >();
+            sstd_virtual_new< QHBoxLayout >();
         arg->addLayout(varLineLayout);
         auto varLabel =
-                sstd_virtual_new<QLabel>();
+            sstd_virtual_new<QLabel>();
         varLineLayout->addWidget(varLabel);
         auto varText =
-                sstd_virtual_new<QLineEdit>();
+            sstd_virtual_new<QLineEdit>();
         varLineLayout->addWidget(varText);
 
         label = varLabel;
@@ -164,8 +164,8 @@ namespace _theMainWindowFile{
         return *this;
     }
 
-    template<typename T,typename U>
-    inline LoginFunction::LoginFunction(T && userName, U && passWord){
+    template<typename T, typename U>
+    inline LoginFunction::LoginFunction(T && userName, U && passWord) {
         thisData.ans = sstd_make_shared< LoginFunctionAns >();
         thisData.ans->userName = userName;
         thisData.passWord = std::forward<U>(passWord);
@@ -174,36 +174,39 @@ namespace _theMainWindowFile{
     /*如果发生异常，
     这是程序逻辑设计错误或严重运行时错误（比如用户不存在，用户名不合法……），
     用户应当删除此登录类*/
-    inline void LoginFunction::doException() noexcept{
+    inline void LoginFunction::doException() noexcept {
         auto varLoginAns = thisData.ans/*当前堆栈获得数据所有权*/;
         varLoginAns->hasError = true;
         using namespace _theMainWindowFile;
-        sstd_try {
-            std::rethrow_exception( std::current_exception() );
-        } sstd_catch(const QString & arg){
-            varLoginAns->ErrorString = getExceptionStart()+arg;
-        } sstd_catch (...) {
-            varLoginAns->ErrorString = getExceptionStart()+QStringLiteral("unknow");
+        sstd_try{
+            std::rethrow_exception(std::current_exception());
+        } sstd_catch(const QString & arg) {
+            varLoginAns->ErrorString = getExceptionStart() + arg;
+        } sstd_catch(...) {
+            varLoginAns->ErrorString = getExceptionStart() + QStringLiteral("unknow");
         }
-        this->finished( varLoginAns );
+        this->finished(varLoginAns);
     }
 
     /*如果发生运行时已知错误将控制权转交给调用者*/
-    inline void LoginFunction::errorYield(){
-            this->finished( thisData.ans );
-            this->outerYiled();
+    inline void LoginFunction::errorYield() {
+        if (!thisData.ans->hasError) {
+            return;
+        }
+        this->finished(thisData.ans);
+        this->outerYiled();
     }
 
     /*如果用户主动调用quit()*/
-    void LoginFunction::doQuit() noexcept{
+    void LoginFunction::doQuit() noexcept {
         auto varLoginAns = thisData.ans/*当前堆栈获得数据所有权*/;
         varLoginAns->hasError = true;
         using namespace _theMainWindowFile;
         varLoginAns->ErrorString = getQuitStart() + QStringLiteral("but not finished");
-        this->finished( thisData.ans );
+        this->finished(thisData.ans);
     }
 
-    inline void LoginFunction::doRun(){
+    inline void LoginFunction::doRun() {
 
 #define error_goto(...) if( varLoginAns->hasError ) { \
     goto __VA_ARGS__; } static_assert (true)
@@ -212,27 +215,27 @@ namespace _theMainWindowFile{
         auto varThisData = &thisData;
         auto varNetworkAccessManager = varLoginAns->networkAccessManager.get();
 
-just_start_label:errorYield();
+    just_start_label:errorYield();
 
-        {/*访问百度贴吧,检查网络，并获得一些cookies*/
-            varThisData->ans->hasError = false;
-            QNetworkRequest varRequest{ QStringLiteral(R"(https://tieba.baidu.com/index.html)") };
-            auto varReply = varNetworkAccessManager->get( varRequest );
-            varReply->connect( varReply , &QNetworkReply::finished,
-                             bind( [varReply,varThisData](){
-                varReply->deleteLater();
-                if( varReply->error() != QNetworkReply::NoError ){
-                    varThisData->ans->hasError=true;
-                    varThisData->ans->ErrorString = QVariant( varReply->error() ).toString() ;
-                } } ));
-            this->innerYield();
-        }
-        error_goto(just_start_label);
+    {/*访问百度贴吧,检查网络，并获得一些cookies*/
+        varThisData->ans->hasError = false;
+        QNetworkRequest varRequest{ QStringLiteral(R"(https://tieba.baidu.com/index.html)") };
+        auto varReply = varNetworkAccessManager->get(varRequest);
+        varReply->connect(varReply, &QNetworkReply::finished,
+            bind([varReply, varThisData]() {
+            varReply->deleteLater();
+            if (varReply->error() != QNetworkReply::NoError) {
+                varThisData->ans->hasError = true;
+                varThisData->ans->ErrorString = QVariant(varReply->error()).toString();
+            } }));
+        this->innerYield();
+    }
+    error_goto(just_start_label);
 
-        /*登录完成*/
-        varLoginAns->hasError = false;
-        varLoginAns->ErrorString.clear();
-        this->finished( varLoginAns );
+    /*登录完成*/
+    varLoginAns->hasError = false;
+    varLoginAns->ErrorString.clear();
+    this->finished(varLoginAns);
 
 #undef error_goto
     }

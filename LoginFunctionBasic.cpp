@@ -1,9 +1,9 @@
 ﻿#include "LoginFunctionBasic.hpp"
 
-LoginFunctionBasic::LoginFunctionBasic(){
+LoginFunctionBasic::LoginFunctionBasic() {
 }
 
-LoginFunctionAns::LoginFunctionAns(){
+LoginFunctionAns::LoginFunctionAns() {
     networkAccessManager = sstd_make_deletelater_virtual_unique< QNetworkAccessManager >();
 }
 

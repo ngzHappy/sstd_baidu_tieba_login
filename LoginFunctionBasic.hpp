@@ -5,9 +5,9 @@
 class LoginFunctionAns final {
     sstd_delete_copy_create(LoginFunctionAns);
 public:
-    std::unique_ptr< QNetworkAccessManager , sstd::DeleteLater > networkAccessManager;
+    std::unique_ptr< QNetworkAccessManager, sstd::DeleteLater > networkAccessManager;
     QString userName;
-    bool hasError{false};
+    bool hasError{ false };
     QString ErrorString{ QStringLiteral("there is a error but not set!") };
 public:
     LoginFunctionAns();
@@ -18,8 +18,8 @@ private:
 Q_DECLARE_METATYPE(std::shared_ptr< LoginFunctionAns >)
 
 class LoginFunctionBasic :
-        public QObject ,
-        public sstd::YieldResumeFunction {
+    public QObject,
+    public sstd::YieldResumeFunction {
     Q_OBJECT
 public:
     LoginFunctionBasic();
