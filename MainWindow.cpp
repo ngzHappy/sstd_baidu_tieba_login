@@ -30,6 +30,8 @@ namespace _theMainWindowFile {
         public:
             std::shared_ptr< LoginFunctionAns > ans;
             QString passWord;
+            QByteArray token;
+            QByteArray gid;
         }thisData;
     public:
         template<typename T, typename U>
@@ -50,6 +52,9 @@ namespace _theMainWindowFile {
     inline QString getQuitStart() {
         return QStringLiteral("&&quit:");
     }
+
+    template<typename IB, typename IE>
+    inline QByteArray toHtmlUrl(QByteArray varAns, IB, IE);
 
 }/*_theMainWindowFile*/
 
@@ -95,10 +100,10 @@ public:
             this, [this](std::shared_ptr< LoginFunctionAns > arg) {
             if (arg->hasError) {
                 using namespace _theMainWindowFile;
-                if (arg->ErrorString.startsWith(getQuitStart()) || (arg->ErrorString.startsWith(getExceptionStart()))) {
+                if (arg->errorString.startsWith(getQuitStart()) || (arg->errorString.startsWith(getExceptionStart()))) {
                     allLogin.erase(arg->userName);
                 }
-                qDebug() << arg->userName << QStringLiteral(" login with error :") << arg->ErrorString;
+                qDebug() << arg->userName << QStringLiteral(" login with error :") << arg->errorString;
                 return;
             } else {
                 qDebug() << arg->userName << QStringLiteral(" login success !");
@@ -179,6 +184,11 @@ namespace _theMainWindowFile {
         thisData.passWord = std::forward<U>(passWord);
     }
 
+    template<typename T>
+    inline QString toRuntimeError(T && arg) {
+        return QStringLiteral("!!") + std::forward<T>(arg);
+    }
+
     /*获得当前时间*/
     inline QByteArray getCurrentTimer() {
         return QByteArray::number(QDateTime::currentMSecsSinceEpoch());
@@ -203,7 +213,7 @@ namespace _theMainWindowFile {
             char data[35];
         public:
             Array() :data{
-                toHex0[std::rand() & 15],toHex0[std::rand() & 15],toHex0[std::rand() & 15],
+                         toHex0[std::rand() & 15],toHex0[std::rand() & 15],toHex0[std::rand() & 15],
                 toHex0[std::rand() & 15],toHex0[std::rand() & 15],toHex0[std::rand() & 15],
                 toHex0[std::rand() & 15], '-',toHex0[std::rand() & 15],
                 toHex0[std::rand() & 15],toHex0[std::rand() & 15],toHex0[std::rand() & 15],
@@ -225,6 +235,10 @@ namespace _theMainWindowFile {
 
     }
 
+    inline QByteArray userAgent() {
+        return QByteArrayLiteral(u8R"(Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:66.0) Gecko/20100101 Firefox/66.0)");
+    }
+
     /*如果发生异常，
     这是程序逻辑设计错误或严重运行时错误，
     用户应当删除此登录类*/
@@ -235,9 +249,9 @@ namespace _theMainWindowFile {
         sstd_try{
             std::rethrow_exception(std::current_exception());
         } sstd_catch(const QString & arg) {
-            varLoginAns->ErrorString = getExceptionStart() + arg;
+            varLoginAns->errorString = getExceptionStart() + arg;
         } sstd_catch(...) {
-            varLoginAns->ErrorString = getExceptionStart() + QStringLiteral("unknow");
+            varLoginAns->errorString = getExceptionStart() + QStringLiteral("unknow");
         }
         this->finished(varLoginAns);
     }
@@ -256,7 +270,7 @@ namespace _theMainWindowFile {
         auto varLoginAns = thisData.ans/*当前堆栈获得数据所有权*/;
         varLoginAns->hasError = true;
         using namespace _theMainWindowFile;
-        varLoginAns->ErrorString = getQuitStart() + QStringLiteral("but not finished");
+        varLoginAns->errorString = getQuitStart() + QStringLiteral("but not finished");
         this->finished(thisData.ans);
     }
 
@@ -271,9 +285,9 @@ namespace _theMainWindowFile {
         auto varNetworkAccessManager = varLoginAns->networkAccessManager.get();
 
         {/*初始化数据*/
-            varLoginAns->baiduLoginGID = getGID();
+            varThisData->gid = getGID();
 
-    }
+        }
 
 #if defined(error_goto)
 #error should not define error_goto
@@ -281,33 +295,113 @@ namespace _theMainWindowFile {
 #define error_goto(...) if( varLoginAns->hasError ) { \
     goto __VA_ARGS__; } static_assert (true)
 
-        just_start_label:errorYield();
-        {/*访问百度贴吧:检查网络，并获得一些cookies*/
+#if defined(define_label)
+#error should not define define_label
+#endif
+#define define_label(...) __VA_ARGS__ : errorYield()
+
+        define_label(just_start_label);
+        {/*访问百度:检查网络，并获得一些cookies*/
             varThisData->ans->hasError = false;
-            QNetworkRequest varRequest{ QStringLiteral(R"(https://tieba.baidu.com/index.html)") };
+
+            QNetworkRequest varRequest{ QStringLiteral(R"(https://www.baidu.com)") };
+            varRequest.setRawHeader(QByteArrayLiteral("User-Agent"), userAgent());
+
             auto varReply = varNetworkAccessManager->get(varRequest);
             varReply->connect(varReply, &QNetworkReply::finished,
-                bind([varReply, varThisData]() {
+                bind([varReply, varThisData, varNetworkAccessManager]() {
+
                 varReply->deleteLater();
-                if (varReply->error() != QNetworkReply::NoError) {
-                    varThisData->ans->hasError = true;
-                    varThisData->ans->ErrorString = QVariant(varReply->error()).toString();
-                } }));
+
+                const auto varAllCookies =
+                    reinterpret_cast<NetworkCookieJar *>(varNetworkAccessManager->cookieJar())->allCookies();
+
+                for (const auto & varI : varAllCookies) {
+                    if (QByteArrayLiteral("BAIDUID") == varI.name()) {
+                        return;
+                    }
+                }
+
+                varThisData->ans->hasError = true;
+                varThisData->ans->errorString = toRuntimeError(QStringLiteral(R"(can not find BAIDUID!)"));
+
+            }));
             this->innerYield();
         }
         error_goto(just_start_label);
 
+        define_label(get_token_label);
         {
+            varThisData->ans->hasError = false;
+            QUrl varUrl;
+            {
+                auto varUrlData =
+                    QByteArrayLiteral(u8R"(https://passport.baidu.com/v2/api/?getapi)");
+                auto varCurrentTime = getCurrentTimer();
+                std::pair< const QByteArray, const QByteArray > urlData[]{
+                    { QByteArrayLiteral("tpl"),QByteArrayLiteral("mn")}                   ,
+                    { QByteArrayLiteral("apiver"),QByteArrayLiteral("v3") }               ,
+                    { QByteArrayLiteral("tt"),std::move(varCurrentTime) }                 ,
+                    { QByteArrayLiteral("class"),QByteArrayLiteral("login") }                                ,
+                    { QByteArrayLiteral("gid"), varThisData->gid }                        ,
+                    { QByteArrayLiteral("loginversion"),QByteArrayLiteral("v4") }   ,
+                    { QByteArrayLiteral("logintype"),QByteArrayLiteral("dialogLogin") }   ,
+                    { QByteArrayLiteral("traceid"),QByteArrayLiteral("")},
+                    { QByteArrayLiteral("callback"),QByteArrayLiteral("bd__cbs__rl1it5") }/*回调的函数名称，这里可以是随机的*/,
+                };
+                varUrlData = toHtmlUrl(std::move(varUrlData), std::begin(urlData), std::end(urlData));
+                varUrl.setUrl(std::move(varUrlData));
+            }
+
+            QNetworkRequest varRequest{ varUrl };
+            varRequest.setRawHeader(QByteArrayLiteral("User-Agent"), userAgent());
+            varRequest.setRawHeader(QByteArrayLiteral("Referer"), QByteArray("https://www.baidu.com"));
+
+            auto varReply = varNetworkAccessManager->get(varRequest);
+            varReply->connect(varReply, &QNetworkReply::finished,
+                bind([varReply, varThisData]() {
+                varReply->deleteLater();
+
+                auto varJson = varReply->readAll();
+
+                if (varJson.isEmpty()) {
+                    varThisData->ans->hasError = true;
+                    varThisData->ans->errorString = toRuntimeError(QStringLiteral(R"(null @ get token)"));
+                    return;
+                }
+
+                QJSEngine varEngine;
+                auto varAnsToken = varEngine.evaluate(QStringLiteral(R"(
+
+function bd__cbs__rl1it5( theArg ){
+    return theArg["data"]["token"];
+}
+
+)") + QString::fromUtf8(varJson));
+
+                if (!varAnsToken.isError()) {
+                    varThisData->token = varAnsToken.toString().toUtf8();
+                    return;
+                }
+
+                varThisData->ans->hasError = true;
+                varThisData->ans->errorString = toRuntimeError(varAnsToken.toString());
+
+            }));
+            this->innerYield();
+
         }
+        error_goto(get_token_label);
 
         {/*登录完成:*/
             varLoginAns->hasError = false;
-            varLoginAns->ErrorString.clear();
+            varLoginAns->errorString.clear();
             this->finished(varLoginAns);
         }
 
 #undef error_goto
-}
+#undef define_label
+    }
 
     inline constexpr auto dataStreamVersion() {
         return QDataStream::Qt_5_12;
@@ -357,6 +451,19 @@ namespace _theMainWindowFile {
 
         var->setAllCookies(std::move(varCookies));
 
+    }
+
+    template<typename IB, typename IE>
+    inline QByteArray toHtmlUrl(QByteArray varAns, IB argPos, IE argEnd) {
+        for (; argPos != argEnd; ++argPos) {
+            const auto & var1 = argPos->first;
+            const auto & var2 = argPos->second;
+            varAns.append(QByteArrayLiteral("&")
+                + var1
+                + QByteArrayLiteral("=")
+                + var2);
+        }
+        return std::move(varAns);
     }
 
 }/*_theMainWindowFile*/

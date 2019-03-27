@@ -8,9 +8,8 @@ public:
     std::unique_ptr< QNetworkAccessManager, sstd::DeleteLater > networkAccessManager;
     QString userName;
     bool hasError{ false };
-    QString ErrorString{ QStringLiteral("there is a error but not set!") };
+    QString errorString{ QStringLiteral("there is a error but not set!") };
 public:
-    QByteArray baiduLoginGID;
 
 public:
     LoginFunctionAns();
