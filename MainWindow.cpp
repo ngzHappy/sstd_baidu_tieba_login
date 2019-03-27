@@ -234,13 +234,13 @@ namespace _theMainWindowFile {
         using namespace _theMainWindowFile;
         sstd_try{
             std::rethrow_exception(std::current_exception());
-    } sstd_catch(const QString & arg) {
-        varLoginAns->ErrorString = getExceptionStart() + arg;
-    } sstd_catch(...) {
-        varLoginAns->ErrorString = getExceptionStart() + QStringLiteral("unknow");
+        } sstd_catch(const QString & arg) {
+            varLoginAns->ErrorString = getExceptionStart() + arg;
+        } sstd_catch(...) {
+            varLoginAns->ErrorString = getExceptionStart() + QStringLiteral("unknow");
+        }
+        this->finished(varLoginAns);
     }
-    this->finished(varLoginAns);
-}
 
     /*如果发生运行时已知错误将控制权转交给调用者*/
     inline void LoginFunction::errorYield() {
@@ -273,7 +273,7 @@ namespace _theMainWindowFile {
         {/*初始化数据*/
             varLoginAns->baiduLoginGID = getGID();
 
-        }
+    }
 
 #if defined(error_goto)
 #error should not define error_goto
@@ -307,7 +307,7 @@ namespace _theMainWindowFile {
         }
 
 #undef error_goto
-    }
+}
 
     inline constexpr auto dataStreamVersion() {
         return QDataStream::Qt_5_12;
