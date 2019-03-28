@@ -60,8 +60,8 @@ namespace _theMainWindowFile {
         return QStringLiteral("&&quit:");
     }
 
-    template<typename IB, typename IE>
-    inline QByteArray toHtmlUrl(QByteArray varAns, IB, IE);
+    template<typename ... Args>
+    inline QByteArray toHtmlUrl(QByteArray, Args && ...);
 
 }/*_theMainWindowFile*/
 
@@ -354,18 +354,18 @@ namespace _theMainWindowFile {
                 auto varUrlData =
                     QByteArrayLiteral(u8R"(https://passport.baidu.com/v2/api/?getapi)");
                 auto varCurrentTime = getCurrentTimer();
-                std::pair< const QByteArray, const QByteArray > urlData[]{
-                    { QByteArrayLiteral("tpl"),QByteArrayLiteral("mn")}                   ,
-                    { QByteArrayLiteral("apiver"),QByteArrayLiteral("v3") }               ,
-                    { QByteArrayLiteral("tt"),std::move(varCurrentTime) }                 ,
-                    { QByteArrayLiteral("class"),QByteArrayLiteral("login") }             ,
-                    { QByteArrayLiteral("gid"), varThisData->gid }                        ,
-                    { QByteArrayLiteral("loginversion"),QByteArrayLiteral("v4") }         ,
-                    { QByteArrayLiteral("logintype"),QByteArrayLiteral("dialogLogin") }   ,
-                    { QByteArrayLiteral("traceid"),QByteArrayLiteral("")}                 ,
-                    { QByteArrayLiteral("callback"),QByteArrayLiteral("bd__cbs__rl1it5") }/*回调的函数名称，这里可以是随机的*/,
-                };
-                varUrlData = toHtmlUrl(std::move(varUrlData), std::begin(urlData), std::end(urlData));
+
+                varUrlData = toHtmlUrl(std::move(varUrlData),
+                    QByteArrayLiteral("tpl"), QByteArrayLiteral("mn"),
+                    QByteArrayLiteral("apiver"), QByteArrayLiteral("v3"),
+                    QByteArrayLiteral("tt"), std::move(varCurrentTime),
+                    QByteArrayLiteral("class"), QByteArrayLiteral("login"),
+                    QByteArrayLiteral("gid"), varThisData->gid,
+                    QByteArrayLiteral("loginversion"), QByteArrayLiteral("v4"),
+                    QByteArrayLiteral("logintype"), QByteArrayLiteral("dialogLogin"),
+                    QByteArrayLiteral("traceid"), QByteArrayLiteral(""),
+                    QByteArrayLiteral("callback"), QByteArrayLiteral("bd__cbs__rl1it5")/*回调的函数名称，这里可以是随机的*/);
+
                 varUrl.setUrl(std::move(varUrlData));
             }
 
@@ -416,15 +416,15 @@ function bd__cbs__rl1it5( theArg ){
                 QByteArray varUrlData = QByteArrayLiteral(u8R"(https://passport.baidu.com/v2/getpublickey?token=)");
                 varUrlData += varThisData->token;
                 auto varCurrentTime = getCurrentTimer();
-                std::pair< const QByteArray, const QByteArray > urlData[]{
-                    { QByteArrayLiteral("tpl"),QByteArrayLiteral("mn") }                  ,
-                    { QByteArrayLiteral("apiver"),QByteArrayLiteral("v3") }               ,
-                    { QByteArrayLiteral("tt"),std::move(varCurrentTime) }                 ,
-                    { QByteArrayLiteral("class"),QByteArrayLiteral("login") }             ,
-                    { QByteArrayLiteral("gid"), varThisData->gid }                        ,
-                    { QByteArrayLiteral("callback"),QByteArrayLiteral("bd__cbs__dmwxux") }/*回调的函数名称，这里可以是随机的*/,
-                };
-                varUrlData = toHtmlUrl(std::move(varUrlData), std::begin(urlData), std::end(urlData));
+
+                varUrlData = toHtmlUrl(std::move(varUrlData),
+                    QByteArrayLiteral("tpl"), QByteArrayLiteral("mn"),
+                    QByteArrayLiteral("apiver"), QByteArrayLiteral("v3"),
+                    QByteArrayLiteral("tt"), std::move(varCurrentTime),
+                    QByteArrayLiteral("class"), QByteArrayLiteral("login"),
+                    QByteArrayLiteral("gid"), varThisData->gid,
+                    QByteArrayLiteral("callback"), QByteArrayLiteral("bd__cbs__dmwxux") /*回调的函数名称，这里可以是随机的*/);
+
                 varUrl.setUrl(std::move(varUrlData));
             }
 
@@ -530,38 +530,35 @@ function bd__cbs__dmwxux( theArg ){
 
             {
                 auto varCurrentTime = getCurrentTimer();
-                std::pair< const QByteArray, const QByteArray > varPostDataArray[]{
-                    {QByteArrayLiteral("charset"),QByteArrayLiteral("utf-8")},
-                    {QByteArrayLiteral("token"), varThisData->token  },
-                    {QByteArrayLiteral("tpl"),QByteArrayLiteral("mn")},
-                    {QByteArrayLiteral("subpro"),QByteArrayLiteral("")},
-                    {QByteArrayLiteral("apiver"),QByteArrayLiteral("v3")},
-                    {QByteArrayLiteral("tt"),std::move(varCurrentTime) },
-                    {QByteArrayLiteral("codestring"), "???" },/*验证码id*/
-                    {QByteArrayLiteral("safeflg"), QByteArrayLiteral("0") },
-                    {QByteArrayLiteral("u"), QByteArrayLiteral("https%3A%2F%2Fwww.baidu.com%2F") },
-                    {QByteArrayLiteral("isPhone"), QByteArrayLiteral("false") },
-                    {QByteArrayLiteral("detect"), QByteArrayLiteral("1")},
-                    {QByteArrayLiteral("gid"), varThisData->gid },
-                    {QByteArrayLiteral("quick_user)"),QByteArrayLiteral("0")},
-                    {QByteArrayLiteral("logintype"), QByteArrayLiteral("dialogLogin") },
-                    {QByteArrayLiteral("logLoginType"),QByteArrayLiteral("pc_loginDialog") },
-                    {QByteArrayLiteral("idc"),QByteArrayLiteral("")},
-                    {QByteArrayLiteral("loginmerge"),  QByteArrayLiteral("true") },
-                    {QByteArrayLiteral("splogin"),QByteArrayLiteral("rate") },
-                    {QByteArrayLiteral("username"), varThisData->ans->userName.toUtf8().toPercentEncoding() },
-                    {QByteArrayLiteral("password"), varThisData->encodedPassWord },
-                    {QByteArrayLiteral("verifycode"), "????" },/*验证码*/
-                    {QByteArrayLiteral("mem_pass"), QByteArrayLiteral("on") },
-                    {QByteArrayLiteral("rsakey"), varThisData->key.toUtf8()   },
-                    {QByteArrayLiteral("crypttype"),QByteArrayLiteral("12")},
-                    {QByteArrayLiteral("ppui_logintime"),QByteArray::number(10000 + (::rand() & 6666)) },/*随机数*/
-                    {QByteArrayLiteral("countrycode"),QByteArrayLiteral("")},
-                    {QByteArrayLiteral("callback"),QByteArrayLiteral("parent.bd__pcbs__s09032")}
-                };
+
                 varPostData = toHtmlUrl(varPostData,
-                    std::begin(varPostDataArray),
-                    std::end(varPostDataArray));
+                    QByteArrayLiteral("charset"), QByteArrayLiteral("utf-8"),
+                    QByteArrayLiteral("token"), varThisData->token,
+                    QByteArrayLiteral("tpl"), QByteArrayLiteral("mn"),
+                    QByteArrayLiteral("subpro"), QByteArrayLiteral(""),
+                    QByteArrayLiteral("apiver"), QByteArrayLiteral("v3"),
+                    QByteArrayLiteral("tt"), std::move(varCurrentTime),
+                    QByteArrayLiteral("codestring"), QByteArrayLiteral("???"),/*验证码id*/
+                    QByteArrayLiteral("safeflg"), QByteArrayLiteral("0"),
+                    QByteArrayLiteral("u"), QByteArrayLiteral("https%3A%2F%2Fwww.baidu.com%2F"),
+                    QByteArrayLiteral("isPhone"), QByteArrayLiteral("false"),
+                    QByteArrayLiteral("detect"), QByteArrayLiteral("1"),
+                    QByteArrayLiteral("gid"), varThisData->gid,
+                    QByteArrayLiteral("quick_user)"), QByteArrayLiteral("0"),
+                    QByteArrayLiteral("logintype"), QByteArrayLiteral("dialogLogin"),
+                    QByteArrayLiteral("logLoginType"), QByteArrayLiteral("pc_loginDialog"),
+                    QByteArrayLiteral("idc"), QByteArrayLiteral(""),
+                    QByteArrayLiteral("loginmerge"), QByteArrayLiteral("true"),
+                    QByteArrayLiteral("splogin"), QByteArrayLiteral("rate"),
+                    QByteArrayLiteral("username"), varThisData->ans->userName.toUtf8().toPercentEncoding(),
+                    QByteArrayLiteral("password"), varThisData->encodedPassWord,
+                    QByteArrayLiteral("verifycode"), QByteArrayLiteral("????"),/*验证码*/
+                    QByteArrayLiteral("mem_pass"), QByteArrayLiteral("on"),
+                    QByteArrayLiteral("rsakey"), varThisData->key.toUtf8(),
+                    QByteArrayLiteral("crypttype"), QByteArrayLiteral("12"),
+                    QByteArrayLiteral("ppui_logintime"), QByteArray::number(10000 + (::rand() & 6666)),/*随机数*/
+                    QByteArrayLiteral("countrycode"), QByteArrayLiteral(""),
+                    QByteArrayLiteral("callback"), QByteArrayLiteral("parent.bd__pcbs__s09032"));
             }
 
             varRequest.setRawHeader(QByteArrayLiteral("Accept"), QByteArrayLiteral("text/html, application/xhtml+xml, */*"));
@@ -642,17 +639,39 @@ function bd__cbs__dmwxux( theArg ){
 
     }
 
-    template<typename IB, typename IE>
-    inline QByteArray toHtmlUrl(QByteArray varAns, IB argPos, IE argEnd) {
-        for (; argPos != argEnd; ++argPos) {
-            const auto & var1 = argPos->first;
-            const auto & var2 = argPos->second;
-            varAns.append(QByteArrayLiteral("&")
-                + var1
-                + QByteArrayLiteral("=")
-                + var2);
+    template<typename A0, typename A1, typename ... AN>
+    inline void toHtmlDetail(QByteArray & varAns,
+        const A0 & a0,
+        const A1 & a1,
+        const AN & ... an) {
+
+        varAns += QByteArrayLiteral("&");
+        varAns += a0;
+        varAns += QByteArrayLiteral("=");
+        varAns += a1;
+
+        if constexpr ((sizeof...(AN)) == 0) {
+            return;
+        } else {
+            toHtmlDetail(varAns, an...);
         }
-        return std::move(varAns);
+
+    }
+
+    template<typename ... Args>
+    inline QByteArray toHtmlUrl(QByteArray varAns, Args && ... args) {
+        static_assert(((sizeof...(args)) & 1) == 0)/*是偶数*/;
+        if constexpr ((sizeof...(args)) == 0) {
+            return std::move(varAns);
+        } else {
+            {/*预分配内存*/
+                auto varSize =
+                    (static_cast<int>((sizeof...(args)) << 1) + ... + static_cast<int>(args.size()));
+                varAns.reserve(4 + varSize + static_cast<int>(varAns.size()));
+            }
+            toHtmlDetail(varAns, args ...);
+            return std::move(varAns);
+        }
     }
 
 }/*_theMainWindowFile*/
